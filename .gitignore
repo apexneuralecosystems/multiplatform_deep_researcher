@@ -1,33 +1,127 @@
+# ─────────────────────────────────────────────────────────────
+# Environment & Secrets
+# ─────────────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# ─────────────────────────────────────────────────────────────
 # Python
+# ─────────────────────────────────────────────────────────────
 __pycache__/
 *.py[cod]
 *$py.class
-.venv/
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
 venv/
+.venv/
+ENV/
 env/
 
-# Environment variables
-.env
+# PyInstaller
+*.manifest
+*.spec
 
-# Node.js
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ─────────────────────────────────────────────────────────────
+# Node.js / Frontend
+# ─────────────────────────────────────────────────────────────
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
+.pnpm-debug.log*
 
-# Logs
-*.log
-debug.log
+# Build outputs
+frontend/dist/
+frontend/build/
+.next/
+out/
 
-# IDEs
-.vscode/
+# ─────────────────────────────────────────────────────────────
+# IDE & Editors
+# ─────────────────────────────────────────────────────────────
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+*.sublime-project
 
-# OS
+# ─────────────────────────────────────────────────────────────
+# OS Generated
+# ─────────────────────────────────────────────────────────────
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Project specific
-output.md
-scripts/
+# ─────────────────────────────────────────────────────────────
+# Logs & Debug
+# ─────────────────────────────────────────────────────────────
+*.log
+logs/
+*.log.*
+
+# ─────────────────────────────────────────────────────────────
+# Database
+# ─────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─────────────────────────────────────────────────────────────
+# Misc
+# ─────────────────────────────────────────────────────────────
+*.bak
+*.tmp
+*.temp
+.cache/

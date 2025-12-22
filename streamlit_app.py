@@ -1,9 +1,14 @@
+"""
+Streamlit UI for Multiplatform Deep Researcher.
+Run with: streamlit run streamlit_app.py
+"""
+
 import asyncio
 import os
 
 import streamlit as st
 
-from research import run_deep_research
+from backend.services.research import run_deep_research
 
 # Set up page configuration
 st.set_page_config(page_title="🔍 Agentic Deep Researcher", layout="wide")
