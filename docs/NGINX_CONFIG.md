@@ -2,6 +2,13 @@
 
 This guide covers Nginx reverse proxy setup for production deployment.
 
+## Production URLs
+
+| Service | URL | Port |
+|---------|-----|------|
+| Frontend | https://multiplatform.apexneural.cloud | 3014 |
+| Backend API | https://multiplatform-api.apexneural.cloud | 8097 |
+
 ## The Problem: "Unexpected token '<'"
 
 If you see this error:
@@ -15,62 +22,50 @@ It means **Nginx is serving HTML instead of proxying to the backend**.
 
 ## Nginx Configuration
 
-Create or edit `/etc/nginx/sites-available/your-domain.conf`:
+### Backend API (multiplatform-api.apexneural.cloud)
 
 ```nginx
 server {
     listen 80;
-    server_name your-domain.com www.your-domain.com;
-    
-    # Redirect HTTP to HTTPS (optional but recommended)
+    server_name multiplatform-api.apexneural.cloud;
     return 301 https://$server_name$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name your-domain.com www.your-domain.com;
+    server_name multiplatform-api.apexneural.cloud;
 
-    # SSL Configuration (adjust paths as needed)
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/multiplatform-api.apexneural.cloud/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/multiplatform-api.apexneural.cloud/privkey.pem;
 
-    # ─────────────────────────────────────────────────────────────
-    # API Routes - Proxy to FastAPI Backend
-    # ─────────────────────────────────────────────────────────────
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000;
+    # Proxy all requests to FastAPI backend on port 8097
+    location / {
+        proxy_pass http://127.0.0.1:8097;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         
-        # Timeout settings for long-running research
+        # Timeout for long-running research
         proxy_connect_timeout 60s;
         proxy_send_timeout 300s;
         proxy_read_timeout 300s;
     }
 
-    # ─────────────────────────────────────────────────────────────
-    # WebSocket Routes - For real-time updates
-    # ─────────────────────────────────────────────────────────────
+    # WebSocket support
     location /ws/ {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:8097;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # WebSocket timeout (keep connection open)
         proxy_read_timeout 86400;
     }
+}
+```
 
-    # ─────────────────────────────────────────────────────────────
-    # Frontend - Serve static files from build
-    # ─────────────────────────────────────────────────────────────
+### Frontend (multiplatform.apexneural.cloud)
     location / {
         root /path/to/multiplatform_deep_researcher/frontend/dist;
         index index.html;

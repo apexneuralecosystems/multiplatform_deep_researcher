@@ -29,15 +29,21 @@ class Settings:
     
     # Server Configuration
     HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", "8000"))
+    PORT: int = int(os.getenv("PORT", "8097"))
     DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
     
     # CORS Configuration - Configurable via environment
     # Set CORS_ORIGINS="https://yourdomain.com,https://app.yourdomain.com" in production
     _default_origins = [
+        # Development
         "http://localhost:5173",
         "http://localhost:3000",
+        "http://localhost:3014",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:3014",
+        # Production
+        "https://multiplatform.apexneural.cloud",
+        "https://multiplatform-api.apexneural.cloud",
     ]
     _env_origins = parse_cors_origins(os.getenv("CORS_ORIGINS"))
     CORS_ORIGINS: List[str] = _env_origins if _env_origins else _default_origins
