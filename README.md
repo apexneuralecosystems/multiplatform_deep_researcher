@@ -131,12 +131,63 @@ multiplatform_deep_researcher/
 
 ## Production Deployment
 
-```bash
-# Build frontend
-cd frontend && npm run build && cd ..
+### Linux Server Setup (First Time)
 
-# Run with Gunicorn (production)
+```bash
+# Navigate to your project directory
+cd /path/to/multiplatform_deep_researcher
+
+# Create virtual environment
+python3 -m venv venv
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Install all dependencies
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Copy environment file and configure
+cp .env.example .env
+nano .env  # Add your API keys
+
+# Build frontend for production
+cd frontend && npm install && npm run build && cd ..
+```
+
+### Running the Application
+
+**Development (Local):**
+```bash
+# Backend (Terminal 1)
+source venv/bin/activate
+uvicorn backend.main:app --reload --port 8000
+
+# Frontend (Terminal 2)
+cd frontend && npm run dev
+```
+
+**Production (Linux Server):**
+```bash
+# Activate virtual environment
+source venv/bin/activate
+
+# Run with Gunicorn (recommended for production)
 gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+# Or run with PM2 for process management
+pm2 start "gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000" --name multiplatform-api
+```
+
+### Updating Dependencies on Server
+
+When you pull new code changes:
+```bash
+cd /path/to/multiplatform_deep_researcher
+source venv/bin/activate
+pip install -r requirements.txt --upgrade
+# Restart your application
+pm2 restart multiplatform-api  # or however you manage your process
 ```
 
 See `docs/SSL_SETUP.md` for SSL/TLS configuration.
@@ -153,10 +204,41 @@ See `docs/SSL_SETUP.md` for SSL/TLS configuration.
 
 ## Troubleshooting
 
-- **"Failed to start research"**: Check that both API keys are valid in `.env`
-- **Backend hangs on startup**: Ensure `MCP_MODE=sse` for faster startup
-- **CORS errors**: Add your frontend URL to `CORS_ORIGINS` in `.env`
-- **Rate limited**: Default is 10 requests/minute for research endpoint
+### Common Errors & Fixes
+
+| Error | Cause | Solution |
+|-------|-------|----------|
+| `ImportError: Fallback to LiteLLM is not available` | `litellm` package not installed | Run `pip install litellm>=1.50.0` in your venv |
+| `ModuleNotFoundError: No module named 'openai'` | `openai` package not installed | Run `pip install openai>=1.50.0` |
+| `ModuleNotFoundError: No module named 'instructor'` | `instructor` package not installed | Run `pip install instructor>=1.0.0` |
+| `ModuleNotFoundError: No module named 'X'` | Missing dependency | Run `pip install -r requirements.txt` |
+| `Failed to start research` | Invalid API keys | Check `.env` has valid `OPENROUTER_API_KEY` and `BRIGHT_DATA_API_TOKEN` |
+| Backend hangs on startup | MCP mode issue | Set `MCP_MODE=sse` in `.env` for faster startup |
+| CORS errors in browser | Frontend URL not allowed | Add your frontend URL to `CORS_ORIGINS` in `.env` |
+| Rate limited (429 error) | Too many requests | Default is 10 req/min for research endpoint |
+
+### Reinstalling Dependencies (Nuclear Option)
+
+If you encounter persistent import errors:
+```bash
+cd /path/to/multiplatform_deep_researcher
+source venv/bin/activate
+pip freeze | xargs pip uninstall -y  # Remove all packages
+pip install -r requirements.txt      # Fresh install
+```
+
+## FAQ
+
+### Why is `requirements.txt` at the root instead of inside `backend/`?
+
+This project is a **monorepo** containing both the Python backend and React frontend. The `requirements.txt` is placed at the project root for several reasons:
+
+1. **Single Source of Truth**: All Python dependencies (backend, Streamlit app, dev tools) are managed in one place
+2. **Easier CI/CD**: Deploy scripts can reference one requirements file at the root
+3. **Standard Practice**: Most Python monorepos place `requirements.txt` or `pyproject.toml` at the root
+4. **uv Compatibility**: The `uv` package manager expects `pyproject.toml` at the project root
+
+The `pyproject.toml` file is the primary dependency definition; `requirements.txt` is generated for traditional pip compatibility.
 
 ## License
 

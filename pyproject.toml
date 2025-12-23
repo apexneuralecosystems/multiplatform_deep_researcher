@@ -19,6 +19,11 @@ dependencies = [
     "crewai-tools[mcp]>=0.69.0",
     "mcp>=1.13.1",
     
+    # LLM Dependencies (explicit to prevent server import errors)
+    "litellm>=1.50.0",
+    "openai>=1.50.0",
+    "instructor>=1.0.0",
+    
     # Rate Limiting & Security
     "slowapi>=0.1.9",
     
