@@ -208,6 +208,7 @@ See `docs/SSL_SETUP.md` for SSL/TLS configuration.
 
 | Error | Cause | Solution |
 |-------|-------|----------|
+| `Unexpected token '<', "<!DOCTYPE"` | API returning HTML not JSON | Nginx not proxying `/api` - see `docs/NGINX_CONFIG.md` |
 | `ImportError: Fallback to LiteLLM is not available` | `litellm` package not installed | Run `pip install litellm>=1.50.0` in your venv |
 | `ModuleNotFoundError: No module named 'openai'` | `openai` package not installed | Run `pip install openai>=1.50.0` |
 | `ModuleNotFoundError: No module named 'instructor'` | `instructor` package not installed | Run `pip install instructor>=1.0.0` |

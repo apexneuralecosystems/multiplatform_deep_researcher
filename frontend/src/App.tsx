@@ -22,17 +22,43 @@ import './components/LandingPage.css';
 // ═══════════════════════════════════════════════════════════════════
 
 async function startResearch(query: string): Promise<ResearchResponse> {
+    // Sanitize query: remove control characters that cause JSON decode errors
+    const sanitizedQuery = query
+        .replace(/[\x00-\x1F\x7F]/g, ' ')  // Remove control characters
+        .replace(/\s+/g, ' ')              // Collapse multiple spaces
+        .trim();
+
     const response = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({ query: sanitizedQuery }),
     });
 
     if (!response.ok) {
-        throw new Error('Failed to start research');
+        // Check if response is HTML (common proxy misconfiguration)
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('text/html')) {
+            throw new Error(
+                'Server returned HTML instead of JSON. Check Nginx/proxy configuration. ' +
+                'See docs/NGINX_CONFIG.md for setup guide.'
+            );
+        }
+        throw new Error(`Failed to start research (${response.status})`);
     }
 
-    return response.json();
+    // Safely parse JSON with error handling
+    const text = await response.text();
+    try {
+        return JSON.parse(text);
+    } catch {
+        if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+            throw new Error(
+                'API returned HTML page instead of JSON. ' +
+                'Backend may not be running or Nginx proxy is misconfigured.'
+            );
+        }
+        throw new Error('Invalid response from server');
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════
