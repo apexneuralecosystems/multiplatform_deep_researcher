@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { WebSocketMessage, AgentsState, AgentStatus } from '../types';
 
+// WebSocket URL configuration
+// Use environment variable for production, construct from window.location for development
+function getWebSocketUrl(sessionId: string): string {
+    const wsBaseUrl = import.meta.env.VITE_WS_URL;
+    if (wsBaseUrl) {
+        // Production: use configured WebSocket URL
+        return `${wsBaseUrl}/ws/research/${sessionId}`;
+    }
+    // Development: use same host with ws/wss protocol
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws/research/${sessionId}`;
+}
+
 const initialAgents: AgentsState = {
     search: { id: 'search', platform: 'search', status: 'waiting' },
     instagram: { id: 'instagram', platform: 'instagram', status: 'waiting' },
@@ -22,7 +35,8 @@ export function useWebSocket(sessionId: string | null) {
     const connect = useCallback(() => {
         if (!sessionId || wsRef.current?.readyState === WebSocket.OPEN) return;
 
-        const wsUrl = `ws://localhost:8000/ws/research/${sessionId}`;
+        const wsUrl = getWebSocketUrl(sessionId);
+        console.log('[WS] Connecting to:', wsUrl);
         const ws = new WebSocket(wsUrl);
 
         ws.onopen = () => {

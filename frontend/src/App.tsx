@@ -18,6 +18,13 @@ import LandingPage from './components/LandingPage';
 import './components/LandingPage.css';
 
 // ═══════════════════════════════════════════════════════════════════
+// API Configuration
+// ═══════════════════════════════════════════════════════════════════
+
+// Use environment variable for production, relative path for development
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
+// ═══════════════════════════════════════════════════════════════════
 // API Functions
 // ═══════════════════════════════════════════════════════════════════
 
@@ -28,7 +35,7 @@ async function startResearch(query: string): Promise<ResearchResponse> {
         .replace(/\s+/g, ' ')              // Collapse multiple spaces
         .trim();
 
-    const response = await fetch('/api/research', {
+    const response = await fetch(`${API_BASE_URL}/api/research`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query: sanitizedQuery }),
