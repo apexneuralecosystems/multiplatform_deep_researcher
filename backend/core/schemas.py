@@ -37,4 +37,5 @@ class SpecialistOutput(BaseModel):
 class DeepResearchFlowState(BaseModel):
     """State for the deep research flow."""
     query: str = ""
+    session_id: Optional[str] = None
     final_response: Optional[str] = None

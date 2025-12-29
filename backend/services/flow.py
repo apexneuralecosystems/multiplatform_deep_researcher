@@ -14,6 +14,8 @@ from crewai.flow.flow import Flow, listen, start
 from crewai_tools import MCPServerAdapter
 from pydantic import HttpUrl
 
+from backend.services.session import session_manager
+
 from backend.core.config import settings
 from backend.core.mcp import get_server_params
 from backend.core.schemas import (
@@ -60,8 +62,11 @@ class DeepResearchFlow(Flow[DeepResearchFlowState]):
         return {"query": self.state.query}
 
     @listen(start_flow)
-    def collect_urls(self) -> Dict[str, Any]:
+    async def collect_urls(self) -> Dict[str, Any]:
         """Search web for user query and return URLBuckets object."""
+        if self.state.session_id:
+            await session_manager.update_agent_status(self.state.session_id, "search", "running", "Searching for relevant URLs...")
+
         logging.info(f"Starting URL collection for query: {self.state.query}")
         try:
             params = get_server_params()
@@ -116,6 +121,10 @@ Output: Pure JSON, no markdown, no explanation.
                 logging.info("Starting search crew...")
                 out: URLBuckets = crew.kickoff()
                 logging.info(f"Search complete. URLs found: {out}")
+                
+                if self.state.session_id:
+                     await session_manager.update_agent_status(self.state.session_id, "search", "done", "URLs collected.")
+
                 return {"urls_buckets": out.model_dump(mode="raw")}
 
         except Exception as e:
@@ -144,6 +153,14 @@ Output: Pure JSON, no markdown, no explanation.
                     raise RuntimeError("MCP server params not configured.")
                 
                 logging.info(f"Processing {platform} with {len(urls)} URLs...")
+                
+                if self.state.session_id:
+                    await session_manager.update_agent_status(
+                        self.state.session_id, 
+                        platform, 
+                        "running", 
+                        f"Analyzing {len(urls)} URLs..."
+                    )
                 
                 with MCPServerAdapter(params, trust_remote_code=True) as mcp_tools:
                     tools_map: Dict[str, List[Any]] = {
@@ -191,6 +208,15 @@ Output JSON with:
                     )
                     platform_output: SpecialistOutput = await crew.kickoff_async()
                     logging.info(f"{platform} specialist complete")
+                    
+                    if self.state.session_id:
+                        await session_manager.update_agent_status(
+                            self.state.session_id, 
+                            platform, 
+                            "done", 
+                            "Analysis complete."
+                        )
+                    
                     return [platform_output]
                     
             except Exception as e:
@@ -198,7 +224,10 @@ Output JSON with:
                 raise e
 
         # Parse URL buckets data
+        logging.info(f"Dispatch input keys: {inputs.keys()}")
         url_buckets_data = inputs.get("urls_buckets", {})
+        logging.info(f"URL buckets raw type: {type(url_buckets_data)}")
+        logging.info(f"URL buckets raw value: {url_buckets_data}")
         
         if hasattr(url_buckets_data, 'raw'):
             url_buckets_dict = json.loads(url_buckets_data.raw) if isinstance(url_buckets_data.raw, str) else url_buckets_data.raw
@@ -208,6 +237,8 @@ Output JSON with:
             url_buckets_dict = url_buckets_data
         else:
             url_buckets_dict = {"instagram": [], "linkedin": [], "youtube": [], "x": [], "web": []}
+            
+        logging.info(f"Parsed URL buckets dict: {url_buckets_dict}")
 
         # Process platforms in parallel
         tasks = []
@@ -241,8 +272,11 @@ Output JSON with:
         return {"specialist_results": results}
 
     @listen(dispatch_to_specialists)
-    def synthesize_response(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
+    async def synthesize_response(self, inputs: Dict[str, Any]) -> Dict[str, Any]:
         """Final deep research response synthesis."""
+        if self.state.session_id:
+            await session_manager.update_agent_status(self.state.session_id, "synthesis", "running", "Synthesizing research report...")
+
         logging.info("Starting response synthesis...")
         
         response_agent = Agent(

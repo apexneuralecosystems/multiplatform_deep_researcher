@@ -34,6 +34,7 @@ async def run_research(session_id: str, query: str):
         # Create and run the flow
         flow = DeepResearchFlow()
         flow.state.query = query
+        flow.state.session_id = session_id
         
         # Broadcast flow started
         await session_manager.broadcast(session_id, {

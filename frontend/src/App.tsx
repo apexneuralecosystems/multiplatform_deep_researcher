@@ -320,12 +320,23 @@ function AgentPanel({ agents }: AgentPanelProps) {
                                     {platformIcons[agentId]}
                                     {platformLabels[agentId]}
                                 </div>
-                                <span className={`agent-status-badge ${agent.status}`}>
-                                    {agent.status}
-                                </span>
+                                <div className="agent-status-container">
+                                    {agent.status === 'running' && (
+                                        <Activity size={14} className="animate-spin" style={{ marginRight: '8px' }} />
+                                    )}
+                                    <span className={`agent-status-badge ${agent.status}`}>
+                                        {agent.status}
+                                    </span>
+                                </div>
                             </div>
                             {agent.message && (
-                                <p className="agent-message">{agent.message}</p>
+                                <p className="agent-message">
+                                    {agent.status === 'running' ? (
+                                        <span className="typing-effect">{agent.message}</span>
+                                    ) : (
+                                        agent.message
+                                    )}
+                                </p>
                             )}
                         </motion.div>
                     );
