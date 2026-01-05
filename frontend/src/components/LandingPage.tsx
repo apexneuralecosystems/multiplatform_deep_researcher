@@ -16,6 +16,7 @@ import {
     Play,
     Star
 } from 'lucide-react';
+import Footer from './Footer';
 
 // Custom X/Twitter Icon
 function XIcon({ size = 24 }: { size?: number }) {
@@ -230,9 +231,10 @@ function TerminalDemo() {
 
 interface LandingPageProps {
     onEnter: () => void;
+    onNavigate: (page: 'landing' | 'dashboard' | 'privacy' | 'terms') => void;
 }
 
-export default function LandingPage({ onEnter }: LandingPageProps) {
+export default function LandingPage({ onEnter, onNavigate }: LandingPageProps) {
     const [isHovering, setIsHovering] = useState(false);
 
     const platforms = [
@@ -461,15 +463,7 @@ export default function LandingPage({ onEnter }: LandingPageProps) {
             {/* ─────────────────────────────────────────────────────── */}
             {/* Footer */}
             {/* ─────────────────────────────────────────────────────── */}
-            <footer className="landing-footer">
-                <div className="footer-content">
-                    <div className="footer-logo">
-                        <Zap size={20} />
-                        <span>DEEP RESEARCHER</span>
-                    </div>
-                    <p>© 2024 Multiplatform Deep Researcher. Powered by CrewAI & Bright Data MCP.</p>
-                </div>
-            </footer>
+            <Footer onNavigate={onNavigate} />
         </div>
     );
 }

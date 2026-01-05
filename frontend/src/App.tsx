@@ -10,11 +10,15 @@ import {
     Globe,
     Copy,
     Download,
-    Activity
+    Activity,
+    ArrowLeft
 } from 'lucide-react';
 import { useWebSocket } from './hooks/useWebSocket';
 import type { AgentsState, ResearchResponse } from './types';
 import LandingPage from './components/LandingPage';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsAndConditions from './components/TermsAndConditions';
+import Footer from './components/Footer';
 import './components/LandingPage.css';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -106,18 +110,52 @@ const platformLabels: Record<string, string> = {
 
 interface TopBarProps {
     isResearching: boolean;
+    onBack: () => void;
 }
 
-function TopBar({ isResearching }: TopBarProps) {
+function TopBar({ isResearching, onBack }: TopBarProps) {
     return (
         <header className="top-bar">
-            <div className="logo">
-                <div className="logo-icon">
-                    <Zap size={22} color="#FAFAFA" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+                <motion.button
+                    onClick={onBack}
+                    className="back-button"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-sm)',
+                        padding: 'var(--space-sm) var(--space-md)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-md)',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-normal)',
+                        fontSize: '0.875rem',
+                        fontFamily: 'var(--font-sans)',
+                    }}
+                    onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--accent-neon)';
+                        e.currentTarget.style.color = 'var(--accent-neon)';
+                    }}
+                    onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'var(--border-default)';
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                    }}
+                >
+                    <ArrowLeft size={16} />
+                    Back to Home
+                </motion.button>
+                <div className="logo">
+                    <div className="logo-icon">
+                        <Zap size={22} color="#FAFAFA" />
+                    </div>
+                    <h1 className="logo-text">
+                        DEEP<span>RESEARCHER</span>
+                    </h1>
                 </div>
-                <h1 className="logo-text">
-                    DEEP<span>RESEARCHER</span>
-                </h1>
             </div>
 
             <div className="status-indicator">
@@ -169,9 +207,10 @@ interface CommandCenterProps {
     onSubmit: (query: string) => void;
     isLoading: boolean;
     result: string | null;
+    agents: AgentsState;
 }
 
-function CommandCenter({ onSubmit, isLoading, result }: CommandCenterProps) {
+function CommandCenter({ onSubmit, isLoading, result, agents }: CommandCenterProps) {
     const [query, setQuery] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -269,15 +308,270 @@ function CommandCenter({ onSubmit, isLoading, result }: CommandCenterProps) {
                     )}
                 </AnimatePresence>
 
-                {isLoading && !result && (
-                    <div className="results-section">
-                        <div className="results-content">
-                            <div className="skeleton skeleton-text" style={{ width: '80%' }} />
-                            <div className="skeleton skeleton-text" style={{ width: '60%' }} />
-                            <div className="skeleton skeleton-text" style={{ width: '90%' }} />
-                            <div className="skeleton skeleton-text" style={{ width: '70%' }} />
+                {/* Enhanced Loading State - Show if loading OR any agents are active */}
+                {((isLoading || Object.values(agents).some(a => a.status === 'running')) && !result) && (
+                    <motion.div
+                        className="results-section"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                    >
+                        <div className="results-header">
+                            <h2>🔍 Research in Progress</h2>
+                            <div className="loading-status">
+                                <motion.div
+                                    className="loading-pulse"
+                                    animate={{ scale: [1, 1.2, 1] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                                <span>
+                                    {Object.values(agents).some(a => a.status === 'running')
+                                        ? 'Analyzing...'
+                                        : 'Initializing...'}
+                                </span>
+                            </div>
                         </div>
-                    </div>
+
+                        <div className="results-content loading-content">
+                            {/* Active Agent Status */}
+                            {(() => {
+                                const runningAgents = Object.values(agents).filter(
+                                    agent => agent.status === 'running'
+                                );
+                                const activeAgents = Object.values(agents).filter(
+                                    agent => agent.status === 'running' || agent.status === 'done'
+                                );
+
+                                return (
+                                    <>
+                                        {(runningAgents.length > 0 || isLoading) && (
+                                            <div className="agent-progress">
+                                                <h3 style={{ 
+                                                    color: 'var(--accent-neon)', 
+                                                    marginBottom: 'var(--space-md)',
+                                                    fontSize: '0.9rem',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '1px'
+                                                }}>
+                                                    {runningAgents.length > 0 ? '🤖 Active Agents' : '⏳ Starting Research...'}
+                                                </h3>
+                                                {runningAgents.length === 0 && isLoading && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0 }}
+                                                        animate={{ opacity: 1 }}
+                                                        style={{
+                                                            padding: 'var(--space-md)',
+                                                            textAlign: 'center',
+                                                            color: 'var(--text-secondary)',
+                                                            fontSize: '0.875rem',
+                                                        }}
+                                                    >
+                                                        <motion.span
+                                                            animate={{ opacity: [0.5, 1, 0.5] }}
+                                                            transition={{ duration: 1.5, repeat: Infinity }}
+                                                        >
+                                                            Connecting to research agents...
+                                                        </motion.span>
+                                                    </motion.div>
+                                                )}
+                                                {runningAgents.map((agent) => (
+                                                    <motion.div
+                                                        key={agent.id}
+                                                        className="agent-status-item"
+                                                        initial={{ opacity: 0, x: -20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        style={{
+                                                            padding: 'var(--space-sm) var(--space-md)',
+                                                            marginBottom: 'var(--space-sm)',
+                                                            background: 'var(--bg-elevated)',
+                                                            border: '1px solid var(--accent-neon)',
+                                                            borderRadius: 'var(--radius-md)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: 'var(--space-sm)',
+                                                        }}
+                                                    >
+                                                        <motion.div
+                                                            className="status-indicator"
+                                                            animate={{ 
+                                                                opacity: [0.5, 1, 0.5],
+                                                                scale: [1, 1.1, 1]
+                                                            }}
+                                                            transition={{ 
+                                                                duration: 1.5, 
+                                                                repeat: Infinity 
+                                                            }}
+                                                            style={{
+                                                                width: '8px',
+                                                                height: '8px',
+                                                                borderRadius: '50%',
+                                                                background: 'var(--accent-neon)',
+                                                                boxShadow: '0 0 8px var(--accent-neon)',
+                                                            }}
+                                                        />
+                                                        <span style={{ 
+                                                            color: 'var(--text-primary)',
+                                                            fontSize: '0.875rem',
+                                                            textTransform: 'capitalize'
+                                                        }}>
+                                                            {agent.platform}
+                                                        </span>
+                                                        {agent.message && (
+                                                            <span style={{ 
+                                                                color: 'var(--text-secondary)',
+                                                                fontSize: '0.75rem',
+                                                                marginLeft: 'auto',
+                                                                fontStyle: 'italic'
+                                                            }}>
+                                                                {agent.message}
+                                                            </span>
+                                                        )}
+                                                    </motion.div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {/* Progress Animation */}
+                                        <div className="research-progress">
+                                            <div className="progress-steps">
+                                                {[
+                                                    { name: 'Search', agentId: 'search' },
+                                                    { name: 'Extract', agentId: 'instagram' }, // Using first platform as representative
+                                                    { name: 'Analyze', agentId: 'synthesis' },
+                                                    { name: 'Synthesize', agentId: 'synthesis' }
+                                                ].map((step, index) => {
+                                                    // Check if any extraction agents are active (instagram, linkedin, youtube, x, web)
+                                                    const extractionAgents = ['instagram', 'linkedin', 'youtube', 'x', 'web'];
+                                                    const anyExtractionActive = extractionAgents.some(
+                                                        id => agents[id as keyof AgentsState]?.status === 'running'
+                                                    );
+                                                    const anyExtractionDone = extractionAgents.some(
+                                                        id => agents[id as keyof AgentsState]?.status === 'done'
+                                                    );
+                                                    
+                                                    const stepAgent = agents[step.agentId as keyof AgentsState];
+                                                    let stepActive = false;
+                                                    let stepDone = false;
+                                                    
+                                                    if (step.agentId === 'search') {
+                                                        stepActive = stepAgent?.status === 'running';
+                                                        stepDone = stepAgent?.status === 'done';
+                                                    } else if (step.name === 'Extract') {
+                                                        stepActive = anyExtractionActive;
+                                                        stepDone = anyExtractionDone;
+                                                    } else if (step.name === 'Analyze' || step.name === 'Synthesize') {
+                                                        stepActive = stepAgent?.status === 'running';
+                                                        stepDone = stepAgent?.status === 'done';
+                                                    }
+                                                    
+                                                    return (
+                                                        <motion.div
+                                                            key={step}
+                                                            className="progress-step"
+                                                            initial={{ opacity: 0.3 }}
+                                                            animate={{ 
+                                                                opacity: stepActive ? 1 : 0.3,
+                                                                scale: stepActive ? 1.05 : 1
+                                                            }}
+                                                            style={{
+                                                                display: 'flex',
+                                                                flexDirection: 'column',
+                                                                alignItems: 'center',
+                                                                gap: 'var(--space-xs)',
+                                                                flex: 1,
+                                                            }}
+                                                        >
+                                                            <motion.div
+                                                                className="step-indicator"
+                                                                animate={stepActive ? {
+                                                                    borderColor: 'var(--accent-neon)',
+                                                                    boxShadow: '0 0 12px var(--accent-neon)',
+                                                                } : {}}
+                                                                style={{
+                                                                    width: '40px',
+                                                                    height: '40px',
+                                                                    borderRadius: '50%',
+                                                                    border: `2px solid ${stepDone ? 'var(--accent-neon)' : 'var(--border-default)'}`,
+                                                                    background: stepDone ? 'var(--accent-neon)' : 'transparent',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    position: 'relative',
+                                                                }}
+                                                            >
+                                                                {stepDone ? (
+                                                                    <motion.div
+                                                                        initial={{ scale: 0 }}
+                                                                        animate={{ scale: 1 }}
+                                                                        style={{
+                                                                            width: '12px',
+                                                                            height: '12px',
+                                                                            background: 'var(--bg-primary)',
+                                                                            borderRadius: '50%',
+                                                                        }}
+                                                                    />
+                                                                ) : stepActive ? (
+                                                                    <motion.div
+                                                                        animate={{ rotate: 360 }}
+                                                                        transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                                                        style={{
+                                                                            width: '16px',
+                                                                            height: '16px',
+                                                                            border: '2px solid var(--accent-neon)',
+                                                                            borderTopColor: 'transparent',
+                                                                            borderRadius: '50%',
+                                                                        }}
+                                                                    />
+                                                                ) : null}
+                                                            </motion.div>
+                                                            <span style={{
+                                                                fontSize: '0.75rem',
+                                                                color: stepActive ? 'var(--accent-neon)' : 'var(--text-secondary)',
+                                                                textTransform: 'uppercase',
+                                                                letterSpacing: '0.5px',
+                                                            }}>
+                                                                {step.name}
+                                                            </span>
+                                                        </motion.div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+
+                                        {/* Animated Loading Text */}
+                                        <motion.div
+                                            className="loading-message"
+                                            style={{
+                                                marginTop: 'var(--space-xl)',
+                                                textAlign: 'center',
+                                                color: 'var(--text-secondary)',
+                                            }}
+                                        >
+                                            <motion.span
+                                                animate={{ opacity: [0.5, 1, 0.5] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                            >
+                                                {runningAgents.length > 0 
+                                                    ? `📊 Gathering data from ${runningAgents.map(a => a.platform).join(', ')}...`
+                                                    : '🚀 Initializing research agents...'
+                                                }
+                                            </motion.span>
+                                        </motion.div>
+
+                                        {/* Skeleton Content Preview */}
+                                        <div className="skeleton-preview" style={{ marginTop: 'var(--space-xl)' }}>
+                                            <div className="skeleton skeleton-text" style={{ width: '80%', height: '20px' }} />
+                                            <div className="skeleton skeleton-text" style={{ width: '60%', height: '20px', marginTop: 'var(--space-md)' }} />
+                                            <div className="skeleton skeleton-text" style={{ width: '90%', height: '20px', marginTop: 'var(--space-md)' }} />
+                                            <div className="skeleton skeleton-text" style={{ width: '70%', height: '20px', marginTop: 'var(--space-md)' }} />
+                                            <div className="skeleton skeleton-text" style={{ width: '85%', height: '20px', marginTop: 'var(--space-md)' }} />
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </motion.div>
                 )}
             </div>
         </main>
@@ -350,8 +644,10 @@ function AgentPanel({ agents }: AgentPanelProps) {
 // Main App Component
 // ═══════════════════════════════════════════════════════════════════
 
+type NavigationState = 'landing' | 'dashboard' | 'privacy' | 'terms';
+
 function App() {
-    const [showLanding, setShowLanding] = useState(true);
+    const [navigation, setNavigation] = useState<NavigationState>('landing');
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [isResearching, setIsResearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -372,14 +668,24 @@ function App() {
         }
     }, [reset]);
 
-    // Stop loading when result arrives
+    // Keep loading state active if agents are still running
+    const hasActiveAgents = Object.values(agents).some(
+        agent => agent.status === 'running'
+    );
     const hasResult = !!result;
-    if (hasResult && isResearching) {
+    
+    // Only stop loading when result arrives AND no agents are running
+    if (hasResult && isResearching && !hasActiveAgents) {
         setIsResearching(false);
     }
 
-    // Show landing page first
-    if (showLanding) {
+    // Navigation handler
+    const navigateTo = (page: NavigationState) => {
+        setNavigation(page);
+    };
+
+    // Render based on navigation state
+    if (navigation === 'landing') {
         return (
             <AnimatePresence mode="wait">
                 <motion.div
@@ -388,12 +694,48 @@ function App() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.5 }}
                 >
-                    <LandingPage onEnter={() => setShowLanding(false)} />
+                    <LandingPage 
+                        onEnter={() => navigateTo('dashboard')}
+                        onNavigate={navigateTo}
+                    />
                 </motion.div>
             </AnimatePresence>
         );
     }
 
+    if (navigation === 'privacy') {
+        return (
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key="privacy"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <PrivacyPolicy onNavigate={navigateTo} />
+                </motion.div>
+            </AnimatePresence>
+        );
+    }
+
+    if (navigation === 'terms') {
+        return (
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key="terms"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <TermsAndConditions onNavigate={navigateTo} />
+                </motion.div>
+            </AnimatePresence>
+        );
+    }
+
+    // Dashboard view
     return (
         <AnimatePresence mode="wait">
             <motion.div
@@ -403,14 +745,19 @@ function App() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
             >
-                <TopBar isResearching={isResearching} />
+                <TopBar 
+                    isResearching={isResearching} 
+                    onBack={() => navigateTo('landing')}
+                />
                 <Sidebar agents={agents} />
                 <CommandCenter
                     onSubmit={handleStartResearch}
-                    isLoading={isResearching}
+                    isLoading={isResearching || hasActiveAgents}
                     result={result}
+                    agents={agents}
                 />
                 <AgentPanel agents={agents} />
+                <Footer onNavigate={navigateTo} />
 
                 {error && (
                     <motion.div

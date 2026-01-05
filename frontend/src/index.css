@@ -118,7 +118,7 @@ body {
 .app-container {
   display: grid;
   grid-template-columns: 80px 1fr 360px;
-  grid-template-rows: 64px 1fr;
+  grid-template-rows: 64px 1fr auto;
   min-height: 100vh;
 }
 
@@ -640,6 +640,81 @@ body {
   width: 60%;
 }
 
+/* Enhanced Loading States */
+.loading-content {
+  padding: var(--space-xl);
+}
+
+.loading-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--accent-neon);
+  font-size: 0.875rem;
+}
+
+.loading-pulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-neon);
+  box-shadow: 0 0 12px var(--accent-neon);
+}
+
+.agent-progress {
+  margin-bottom: var(--space-xl);
+}
+
+.agent-status-item {
+  transition: all var(--transition-normal);
+}
+
+.agent-status-item:hover {
+  transform: translateX(4px);
+  border-color: var(--accent-neon) !important;
+}
+
+.research-progress {
+  margin: var(--space-xl) 0;
+  padding: var(--space-lg);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  position: relative;
+}
+
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  padding: 0 var(--space-md);
+}
+
+.progress-steps::before {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: var(--border-default);
+  z-index: 0;
+}
+
+.progress-step {
+  position: relative;
+  z-index: 1;
+}
+
+.step-indicator {
+  transition: all var(--transition-normal);
+}
+
+.skeleton-preview {
+  opacity: 0.6;
+}
+
 /* ─────────────────────────────────────────────────────────────────
    Animations
    ───────────────────────────────────────────────────────────────── */
@@ -742,6 +817,68 @@ body {
   height: 64px;
   margin-bottom: var(--space-lg);
   opacity: 0.3;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   Footer (Dashboard version)
+   ───────────────────────────────────────────────────────────────── */
+
+.app-container .app-footer {
+  grid-column: 1 / -1;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-default);
+  padding: var(--space-lg) var(--space-xl);
+}
+
+.app-container .footer-divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-default);
+  margin-bottom: var(--space-md);
+}
+
+.app-container .footer-content-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.app-container .footer-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  font-size: 0.875rem;
+}
+
+.app-container .footer-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color var(--transition-normal);
+  padding: 0;
+}
+
+.app-container .footer-link:hover {
+  color: var(--accent-neon);
+}
+
+.app-container .footer-separator {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.app-container .footer-copyright {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0;
+  text-align: center;
 }
 
 /* ─────────────────────────────────────────────────────────────────

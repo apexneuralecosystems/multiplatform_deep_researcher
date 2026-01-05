@@ -1,0 +1,42 @@
+# This file is for local development only. Do NOT use in production.
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: multiplatform-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - HOST=0.0.0.0
+      - MCP_MODE=${MCP_MODE:-sse}
+      - DEBUG=${DEBUG:-false}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:80,http://127.0.0.1:5173,http://127.0.0.1:80
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx, os; port = os.getenv('PORT', '8000'); httpx.get(f'http://localhost:{port}/api/health', timeout=5)"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - VITE_WS_URL=ws://localhost:8000
+    container_name: multiplatform-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
