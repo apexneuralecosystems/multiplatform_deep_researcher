@@ -24,7 +24,7 @@ env/
 *.swp
 *.swo
 
-# Logs
+# Logs (must be excluded to avoid package discovery issues)
 *.log
 logs/
 
@@ -37,3 +37,6 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Docker
+Dockerfile
+.dockerignore

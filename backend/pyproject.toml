@@ -2,9 +2,8 @@
 name = "multiplatform-deep-researcher"
 version = "1.0.0"
 description = "MCP-powered multi-agent deep researcher using CrewAI and Bright Data"
-readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = "MIT"
 authors = []
 keywords = ["ai", "research", "crewai", "mcp", "fastapi", "agents"]
 
@@ -45,6 +44,9 @@ dev = [
     "pytest-asyncio>=0.24.0",
     "ruff>=0.8.0",
 ]
+
+[tool.setuptools]
+packages = ["backend"]
 
 [tool.ruff]
 line-length = 100

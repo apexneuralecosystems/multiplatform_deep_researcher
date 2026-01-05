@@ -28,10 +28,8 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    mkdir -p /app/logs && \
-    chown -R appuser:appuser /app
+# Create non-root user (don't create logs directory yet)
+RUN useradd -m -u 1000 appuser
 
 # Copy installed packages from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
@@ -41,8 +39,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 COPY pyproject.toml requirements.txt ./
 COPY . ./backend/
 
-# Install package in editable mode
+# Install package in editable mode (create logs after install to avoid package discovery issues)
 RUN pip install --no-cache-dir -e . && \
+    mkdir -p /app/logs && \
     chown -R appuser:appuser /app
 
 # Switch to non-root user
