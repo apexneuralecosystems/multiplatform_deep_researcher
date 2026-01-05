@@ -339,9 +339,6 @@ function CommandCenter({ onSubmit, isLoading, result, agents }: CommandCenterPro
                                 const runningAgents = Object.values(agents).filter(
                                     agent => agent.status === 'running'
                                 );
-                                const activeAgents = Object.values(agents).filter(
-                                    agent => agent.status === 'running' || agent.status === 'done'
-                                );
 
                                 return (
                                     <>
@@ -440,7 +437,7 @@ function CommandCenter({ onSubmit, isLoading, result, agents }: CommandCenterPro
                                                     { name: 'Extract', agentId: 'instagram' }, // Using first platform as representative
                                                     { name: 'Analyze', agentId: 'synthesis' },
                                                     { name: 'Synthesize', agentId: 'synthesis' }
-                                                ].map((step, index) => {
+                                                ].map((step) => {
                                                     // Check if any extraction agents are active (instagram, linkedin, youtube, x, web)
                                                     const extractionAgents = ['instagram', 'linkedin', 'youtube', 'x', 'web'];
                                                     const anyExtractionActive = extractionAgents.some(
@@ -467,7 +464,7 @@ function CommandCenter({ onSubmit, isLoading, result, agents }: CommandCenterPro
                                                     
                                                     return (
                                                         <motion.div
-                                                            key={step}
+                                                            key={`${step.name}-${step.agentId}`}
                                                             className="progress-step"
                                                             initial={{ opacity: 0.3 }}
                                                             animate={{ 
