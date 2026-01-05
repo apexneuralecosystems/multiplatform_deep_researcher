@@ -1,9 +1,9 @@
 # ─────────────────────────────────────────────────────────────
 # Multi-stage build for production-optimized FastAPI backend
-# Build from project root: docker build -f backend/Dockerfile .
+# Build context: backend/ folder (cd backend && docker build .)
 # ─────────────────────────────────────────────────────────────
 
-FROM python:3.11-slim as builder
+FROM python:3.11-slim AS builder
 
 WORKDIR /build
 
@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files from project root
+# Copy dependency files (from backend/ folder)
 COPY requirements.txt pyproject.toml ./
 
 # Install Python dependencies
@@ -37,9 +37,9 @@ RUN useradd -m -u 1000 appuser && \
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy dependency files and backend code from project root
+# Copy dependency files and backend code (from backend/ context)
 COPY pyproject.toml requirements.txt ./
-COPY backend/ ./backend/
+COPY . ./backend/
 
 # Install package in editable mode
 RUN pip install --no-cache-dir -e . && \
@@ -55,5 +55,5 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import httpx, os; port = os.getenv('PORT', '8000'); httpx.get(f'http://localhost:{port}/api/health', timeout=5)" || exit 1
 
-# Production server command (shell form for env var expansion)
-CMD gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120 --access-logfile - --error-logfile -
+# Production server command (JSON form for proper signal handling)
+CMD ["sh", "-c", "gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120 --access-logfile - --error-logfile -"]
