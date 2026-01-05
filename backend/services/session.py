@@ -3,10 +3,13 @@ Session management service.
 Handles research sessions and WebSocket connections.
 """
 
+import logging
 import uuid
 from typing import Any, Dict, Optional
 
 from fastapi import WebSocket
+
+logger = logging.getLogger(__name__)
 
 
 class SessionManager:
@@ -65,17 +68,26 @@ class SessionManager:
         if session_id in self.websockets:
             try:
                 await self.websockets[session_id].send_json(data)
-            except Exception:
-                pass  # Client disconnected
+                logger.debug(f"Sent WebSocket message to session {session_id}: {data.get('type', 'unknown')}")
+            except Exception as e:
+                logger.error(f"Failed to send WebSocket message to session {session_id}: {e}")
+                # Clean up disconnected websocket
+                if session_id in self.websockets:
+                    del self.websockets[session_id]
+                    logger.info(f"Removed disconnected WebSocket for session {session_id}")
+        else:
+            logger.warning(f"No WebSocket connection registered for session {session_id} - message not sent: {data.get('type', 'unknown')}")
     
     def register_websocket(self, session_id: str, websocket: WebSocket):
         """Register a WebSocket connection for a session."""
         self.websockets[session_id] = websocket
+        logger.info(f"WebSocket registered for session {session_id}")
     
     def unregister_websocket(self, session_id: str):
         """Unregister a WebSocket connection."""
         if session_id in self.websockets:
             del self.websockets[session_id]
+            logger.info(f"WebSocket unregistered for session {session_id}")
 
 
 # Global session manager instance

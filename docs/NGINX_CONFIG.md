@@ -9,7 +9,9 @@ This guide covers Nginx reverse proxy setup for production deployment.
 | Frontend | https://multiplatform.apexneural.cloud | 3014 |
 | Backend API | https://multiplatform-api.apexneural.cloud | 8097 |
 
-## The Problem: "Unexpected token '<'"
+## Common Problems
+
+### Problem 1: "Unexpected token '<'" or "Server returned HTML instead of JSON"
 
 If you see this error:
 ```
@@ -17,6 +19,21 @@ Unexpected token '<', "<!DOCTYPE "... is not valid JSON
 ```
 
 It means **Nginx is serving HTML instead of proxying to the backend**. 
+
+**Solution**: Ensure your API proxy configuration has the correct `location /api/` block with proper `proxy_pass`.
+
+### Problem 2: WebSocket Connection Established But No Messages Received
+
+If WebSocket connects (status 101) but no real-time updates are received:
+
+**Symptoms**:
+- Frontend shows "Initializing..." indefinitely
+- Backend completes research successfully
+- Browser console shows `[WS] Connected` but no messages
+
+**Root Cause**: Host nginx for backend domain (`multiplatform-api.apexneural.cloud`) is missing WebSocket proxy configuration.
+
+**Solution**: Ensure the backend host nginx has the `/ws/` location block defined **BEFORE** the catch-all `location /` block (see configuration below). 
 
 ---
 
@@ -38,7 +55,21 @@ server {
     ssl_certificate /etc/letsencrypt/live/multiplatform-api.apexneural.cloud/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/multiplatform-api.apexneural.cloud/privkey.pem;
 
-    # Proxy all requests to FastAPI backend on port 8097
+    # WebSocket support - MUST be before location / block
+    location /ws/ {
+        proxy_pass http://127.0.0.1:8097;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
+
+    # Proxy all API requests to FastAPI backend on port 8097
     location / {
         proxy_pass http://127.0.0.1:8097;
         proxy_http_version 1.1;
@@ -51,16 +82,6 @@ server {
         proxy_connect_timeout 60s;
         proxy_send_timeout 300s;
         proxy_read_timeout 300s;
-    }
-
-    # WebSocket support
-    location /ws/ {
-        proxy_pass http://127.0.0.1:8097;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_read_timeout 86400;
     }
 }
 ```
@@ -80,6 +101,20 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/multiplatform.apexneural.cloud/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/multiplatform.apexneural.cloud/privkey.pem;
+
+    # WebSocket support for frontend - MUST be before location / block
+    location /ws/ {
+        proxy_pass http://127.0.0.1:3014;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+        proxy_send_timeout 86400;
+    }
 
     # Proxy to Docker container on port 3014
     location / {
