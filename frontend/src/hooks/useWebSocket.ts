@@ -2,16 +2,27 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import type { WebSocketMessage, AgentsState, AgentStatus } from '../types';
 
 // WebSocket URL configuration
-// Use environment variable for production, construct from window.location for development
 function getWebSocketUrl(sessionId: string): string {
+    // 1. Try explicit WebSocket URL
     const wsBaseUrl = import.meta.env.VITE_WS_URL;
     if (wsBaseUrl) {
-        // Production: use configured WebSocket URL
+        console.log('[WS] Using VITE_WS_URL:', wsBaseUrl);
         return `${wsBaseUrl}/ws/research/${sessionId}`;
     }
-    // Development: use same host with ws/wss protocol
+
+    // 2. Try falling back to API URL (converting http->ws, https->wss)
+    const apiBaseUrl = import.meta.env.VITE_API_URL;
+    if (apiBaseUrl) {
+        const wsUrl = apiBaseUrl.replace(/^http/, 'ws');
+        console.log('[WS] derived from VITE_API_URL:', wsUrl);
+        return `${wsUrl}/ws/research/${sessionId}`;
+    }
+
+    // 3. Development/Self-host: use same host
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${protocol}//${window.location.host}/ws/research/${sessionId}`;
+    const wsUrl = `${protocol}//${window.location.host}/ws/research/${sessionId}`;
+    console.log('[WS] Using window location:', wsUrl);
+    return wsUrl;
 }
 
 const initialAgents: AgentsState = {
