@@ -55,4 +55,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import httpx, os; port = os.getenv('PORT', '8000'); httpx.get(f'http://localhost:{port}/api/health', timeout=5)" || exit 1
 
 # Production server command (JSON form for proper signal handling)
-CMD ["sh", "-c", "gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120 --access-logfile - --error-logfile -"]
+CMD ["sh", "-c", "gunicorn backend.main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000} --timeout 120 --access-logfile - --error-logfile -"]

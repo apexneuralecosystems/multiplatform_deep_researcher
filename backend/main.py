@@ -66,5 +66,5 @@ app.include_router(websocket.router)
 
 # ─────────────────────────────────────────────────────────────
 # Run with: uvicorn backend.main:app --reload --port 8000
-# Production: gunicorn backend.main:app -w 4 -k uvicorn.workers.UvicornWorker
+# Production: gunicorn backend.main:app -w 1 -k uvicorn.workers.UvicornWorker
 # ─────────────────────────────────────────────────────────────
